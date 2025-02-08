@@ -1,6 +1,6 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
 // Define the type for the product object
@@ -10,57 +10,78 @@ interface Product {
 }
 
 function Happy() {
+  const [index, setIndex] = useState(0);
+  const products: Product[] = [
+    { name: "review1", image: "/images/new/Frame 22.png" },
+    { name: "review2", image: "/images/new/Frame 61.png" },
+    { name: "review3", image: "/images/new/Frame 62.png" },
+    
+  ];
+
+  // Handle Next Slide
+  const nextSlide = () => {
+    setIndex((prevIndex) => (prevIndex + 1) % products.length);
+  };
+
+  // Handle Previous Slide
+  const prevSlide = () => {
+    setIndex((prevIndex) => (prevIndex - 1 + products.length) % products.length);
+  };
+
   return (
-    <main className="px-4 sm:px-6 lg:px-8">
+    <main className="px-4 sm:px-6 lg:px-8 py-12 bg-gray-50">
       {/* Header Section */}
-      <div className="flex justify-between items-center mt-10 mb-10">
-        {/* Text on the left */}
-        <h1 className="text-gray-800 font-black text-lg sm:text-xl md:text-2xl lg:text-3xl">
+      <div className="flex flex-col items-center text-center mb-10">
+        <h1 className="text-gray-900 font-extrabold text-2xl sm:text-3xl md:text-4xl lg:text-5xl tracking-wide">
           OUR HAPPY CUSTOMERS
         </h1>
-
-        {/* Arrows on the right */}
-        <div className="flex space-x-2">
-          <button className="p-2 rounded-full hover:bg-gray-200">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-              />
-            </svg>
-          </button>
-          <button className="p-2 rounded-full hover:bg-gray-200">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
-              />
-            </svg>
-          </button>
-        </div>
+        <p className="text-gray-600 text-sm sm:text-base mt-2">
+          See what our satisfied customers have to say!
+        </p>
       </div>
 
-      {/* Product Boxes Section */}
-      <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {products.map((product, index) => (
-          <ProductBox key={index} product={product} />
-        ))}
+      {/* Swipable Section */}
+      <div className="relative flex justify-center items-center">
+        {/* Left Arrow */}
+        <button 
+          onClick={prevSlide} 
+          className="absolute left-4 md:left-10 p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-all"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-7 h-7 text-gray-700">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12m0 0l7.5-7.5" />
+          </svg>
+        </button>
+
+        <div className="overflow-hidden w-full max-w-2xl">
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={index}
+              initial={{ x: 100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -100, opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              onDragEnd={(event, info) => {
+                if (info.offset.x > 50) prevSlide(); // Swipe Right
+                if (info.offset.x < -50) nextSlide(); // Swipe Left
+              }}
+              className="flex justify-center"
+            >
+              <ProductBox product={products[index]} />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Right Arrow */}
+        <button 
+          onClick={nextSlide} 
+          className="absolute right-4 md:right-10 p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-all"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-7 h-7 text-gray-700">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5L15.75 12m0 0l-7.5 7.5" />
+          </svg>
+        </button>
       </div>
     </main>
   );
@@ -68,37 +89,18 @@ function Happy() {
 
 // Product Box Component
 const ProductBox = ({ product }: { product: Product }) => (
-  <div className="group shadow-md bg-neutral-100 rounded-lg overflow-hidden">
-    <div className="relative w-full h-[180px] flex justify-center items-center">
+  <div className="group shadow-xl bg-white rounded-lg overflow-hidden w-80 sm:w-96 p-6 flex flex-col items-center text-center">
+    <div className="relative w-full h-[200px] flex justify-center items-center">
       <Image
         src={product.image}
         width={300}
-        height={180}
+        height={200}
         alt={product.name}
         className="rounded-lg object-cover"
       />
     </div>
+    <h2 className="text-gray-900 font-semibold text-lg mt-4">{product.name}</h2>
   </div>
 );
-
-// Mock Product Data
-const products: Product[] = [
-  {
-    name: "review1",
-    image: "/images/new/Frame 22.png",
-  },
-  {
-    name: "review2",
-    image: "/images/new/Frame 61.png",
-  },
-  {
-    name: "review3",
-    image: "/images/new/Frame 62.png",
-  },
-  {
-    name: "review4",
-    image: "/images/new/Frame 64.png",
-  },
-];
 
 export default Happy;

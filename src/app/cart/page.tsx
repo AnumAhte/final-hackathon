@@ -1,165 +1,142 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import { getCartItems, removeFromCart, updateCartQuantity } from "@/app/actions/actions";
+import Link from "next/link";
+import { Products } from "@/types/products";
+import { urlFor } from "@/sanity/lib/image";
+import { useRouter } from "next/navigation";
 
-const CartPage = () => {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Gradient Graphic T-shirt",
-      size: "Large",
-      color: "White",
-      price: 145,
-      quantity: 1,
-      image: "/images/cart/Frame 33 (4).png",
-    },
-    {
-      id: 2,
-      name: "Checkered Shirt",
-      size: "Medium",
-      color: "Red",
-      price: 180,
-      quantity: 1,
-      image: "/images/cart/Frame 33 (5).png",
-    },
-    {
-      id: 3,
-      name: "Skinny Fit Jeans",
-      size: "Large",
-      color: "Blue",
-      price: 240,
-      quantity: 1,
-      image: "/images/cart/Frame 33 (6).png",
-    },
-  ]);
+export default function CartPage() {
+  const [cartItems, setCartItems] = useState<Products[]>([]);
+  const [subtotal, setSubtotal] = useState<number>(0);
+  const router = useRouter();
 
-  const [promoCode, setPromoCode] = useState("");
-  const [promoApplied, setPromoApplied] = useState(false);
-  const discount = 0.2; // 20% discount
-  const promoDiscount = promoApplied ? 0.1 : 0; // Additional 10% for promo code
-  const deliveryFee = 15;
+  useEffect(() => {
+    loadCartItems();
+  }, []);
 
-  const handleQuantityChange = (id: number, change: number) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item
-      )
+  const loadCartItems = () => {
+    const items = getCartItems();
+    setCartItems(items);
+    calculateSubtotal(items);
+  };
+
+  const calculateSubtotal = (items: Products[]) => {
+    const total = items.reduce((acc, item) => acc + item.price * (item.inventory || 1), 0);
+    setSubtotal(total);
+  };
+
+  const handleRemoveItem = (id: string) => {
+    const updatedCart = cartItems.filter((item) => item._id !== id);
+    setCartItems(updatedCart);
+    removeFromCart(id);
+    calculateSubtotal(updatedCart);
+  };
+
+  const handleIncrease = (id: string) => {
+    const updatedCart = cartItems.map((item) =>
+      item._id === id ? { ...item, inventory: (item.inventory || 1) + 1 } : item
     );
+    setCartItems(updatedCart);
+    updateCartQuantity(id, updatedCart.find(item => item._id === id)!.inventory);
+    calculateSubtotal(updatedCart);
   };
 
-  const handleRemoveItem = (id: number) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
+  const handleDecrease = (id: string) => {
+    const updatedCart = cartItems.map((item) =>
+      item._id === id && item.inventory > 1
+        ? { ...item, inventory: item.inventory - 1 }
+        : item
+    );
+    setCartItems(updatedCart);
+    updateCartQuantity(id, updatedCart.find(item => item._id === id)!.inventory);
+    calculateSubtotal(updatedCart);
   };
 
-  const handleApplyPromoCode = () => {
-    if (promoCode === "SAVE10") {
-      setPromoApplied(true);
-      alert("Promo code applied successfully!");
-    } else {
-      alert("Invalid promo code.");
-    }
+  const handleCheckout = () => {
+    router.push("/checkout");
   };
-
-  const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
-  const discountAmount = subtotal * (discount + promoDiscount);
-  const total = subtotal - discountAmount + deliveryFee;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Cart Items */}
-        <div className="col-span-2 space-y-4">
-          {cartItems.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between bg-white rounded-lg shadow-md p-4"
-            >
-              <div className="flex items-center space-x-4">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-20 h-20 object-cover rounded-lg"
-                />
-                <div>
-                  <h2 className="text-lg font-semibold">{item.name}</h2>
-                  <p className="text-sm text-gray-600">Size: {item.size}</p>
-                  <p className="text-sm text-gray-600">Color: {item.color}</p>
-                  <p className="text-sm font-semibold">${item.price}</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center border rounded-lg">
-                  <button
-                    onClick={() => handleQuantityChange(item.id, -1)}
-                    className="px-3 py-1 text-gray-600 hover:text-black"
-                  >
-                    -
-                  </button>
-                  <span className="px-4 py-1 border-x text-gray-800">{item.quantity}</span>
-                  <button
-                    onClick={() => handleQuantityChange(item.id, 1)}
-                    className="px-3 py-1 text-gray-600 hover:text-black"
-                  >
-                    +
-                  </button>
-                </div>
-                <button
-                  onClick={() => handleRemoveItem(item.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  &#x1F5D1;
-                </button>
-              </div>
-            </div>
-          ))}
+    <div className="min-h-screen bg-gray-50">
+      {/* Breadcrumb */}
+      <div className="mt-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex items-center gap-2 py-4">
+            <span className="text-sm font-medium">Cart</span>
+          </nav>
         </div>
+      </div>
 
-        {/* Order Summary */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+      {/* Cart Items */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {cartItems.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Cart List */}
+            <div className="lg:col-span-2 bg-white border rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Your Cart</h2>
+              {cartItems.map((item) => (
+                <div key={item._id} className="flex items-center gap-4 py-3 border-b">
+                  <div className="w-16 h-16 rounded overflow-hidden">
+                    {item.image && (
+                      <Image
+                        src={urlFor(item.image).url()}
+                        alt={item.name}
+                        width={64}
+                        height={64}
+                        className="object-cover w-full h-full"
+                      />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium">{item.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleDecrease(item._id)}
+                        className="p-1 border rounded text-gray-600"
+                      >
+                        -
+                      </button>
+                      <span>{item.inventory}</span>
+                      <button
+                        onClick={() => handleIncrease(item._id)}
+                        className="p-1 border rounded text-gray-600"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium">${item.price * (item.inventory || 1)}</p>
+                  <button
+                    className="text-red-500 hover:text-red-700 text-sm"
+                    onClick={() => handleRemoveItem(item._id)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
             </div>
-            <div className="flex justify-between">
-              <span>Discount (-{(discount + promoDiscount) * 100}%)</span>
-              <span className="text-red-500">-${discountAmount.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Delivery Fee</span>
-              <span>${deliveryFee.toFixed(2)}</span>
+
+            {/* Order Summary */}
+            <div className="bg-white border rounded-lg p-6">
+              <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+              <p className="text-sm">
+                Subtotal: <span className="font-medium">${subtotal.toFixed(2)}</span>
+              </p>
+              <button
+                className="w-full mt-4 h-12 bg-blue-500 hover:bg-blue-700 text-white rounded-lg"
+                onClick={handleCheckout}
+              >
+                Proceed to Checkout
+              </button>
             </div>
           </div>
-          <div className="flex justify-between font-bold text-lg mt-4">
-            <span>Total</span>
-            <span>${total.toFixed(2)}</span>
-          </div>
-          <div className="mt-4">
-            <input
-              type="text"
-              placeholder="Enter promotional code"
-              value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md mb-2"
-            />
-            <button
-              onClick={handleApplyPromoCode}
-              className="w-full bg-neutral-900 text-white py-2 rounded-md hover:bg-neutral-600"
-            >
-              Apply Promo Code
-            </button>
-          </div>
-          <button className="mt-6 w-full bg-black text-white py-2 rounded-md hover:bg-gray-800">
-            Go to Checkout
-          </button>
-        </div>
+        ) : (
+          <p className="text-lg text-gray-600 text-center">Your cart is empty.</p>
+        )}
       </div>
     </div>
   );
-};
-
-export default CartPage;
+}

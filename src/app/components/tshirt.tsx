@@ -1,145 +1,112 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
+import { client } from "@/sanity/lib/client"; // Import the Sanity client
+import { one } from "@/sanity/lib/queries"; // Import the query to fetch multiple products
+import { Products } from "@/types/products"; // Import the Products type
+import Image from "next/image"; // Use Next.js Image component
+import { urlFor } from "@/sanity/lib/image"; // Import the URL generator
+import { addToCart } from "../actions/actions";
+import Swal from "sweetalert2";
 
-const TShirtPage = () => {
-  const [selectedColor, setSelectedColor] = useState("#6b4f3b");
-  const [selectedSize, setSelectedSize] = useState("Large");
-  const [quantity, setQuantity] = useState(1);
+const ProductPage = () => {
+  const [products, setProducts] = useState<Products[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleColorChange = (color: string) => {
-    setSelectedColor(color);
-  };
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await client.fetch(one); // Fetch multiple products using the 'one' query
+        if (data && data.length > 0) {
+          setProducts(data); // Set fetched products to state
+        } else {
+          setError("No products found");
+        }
+      } catch (err) {
+        console.error("Error fetching products:", err);
+        setError("Failed to load products");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleSizeChange = (size: string) => {
-    setSelectedSize(size);
+    fetchProducts();
+  }, []);
+
+  if (loading) {
+    return <div>Loading products...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
+  const handleAddToCart = (e: React.MouseEvent, product: Products) => {
+    e.preventDefault();
+    Swal.fire({
+      position: "top",
+      icon: "success",
+      title: `${product.name} added to cart`,
+      showConfirmButton: false,
+      timer: 3000,
+    });
+    addToCart(product);
   };
 
   return (
-    <div className="container mx-auto px-6 py-12">
-      <nav className="text-sm text-gray-600 mb-6">
-        <span className="hover:underline">Home</span> &gt; 
-        <span className="hover:underline">Shop</span> &gt; 
-        <span className="hover:underline">Men</span> &gt; 
-        <span className="text-black">T-shirts</span>
-      </nav>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Image Section */}
-        <div className="space-y-6">
-          <img
-            src="/images/tshirt/image 1.png"
-            alt="T-shirt"
-            className="w-full rounded-lg border"
-          />
-          <div className="flex space-x-4">
-            <img
-              src="/images/tshirt/image 2.png"
-              alt="T-shirt"
-              className="w-20 h-20 object-cover border rounded-lg"
-            />
-            <img
-              src="/images/tshirt/image 5.png"
-              alt="T-shirt"
-              className="w-20 h-20 object-cover border rounded-lg"
-            />
-            <img
-              src="/images/tshirt/image 6.png"
-              alt="T-shirt"
-              className="w-20 h-20 object-cover border rounded-lg"
-            />
-          </div>
-        </div>
-
-        {/* Product Details Section */}
-        <div>
-          <h1 className="text-4xl font-bold mb-4">ONE LIFE GRAPHIC T-SHIRT</h1>
-          <div className="flex items-center space-x-2 mb-4">
-            <div className="text-yellow-500 text-xl">★★★★☆</div>
-            <span className="text-gray-500 text-sm">4.5/5</span>
-          </div>
-          <div className="flex items-center space-x-6 mb-6">
-            <span className="text-3xl font-bold text-black">$260</span>
-            <span className="text-gray-400 line-through text-lg">$300</span>
-            <span className="text-red-500 text-lg">-40%</span>
-          </div>
-          <p className="text-gray-700 mb-6 text-lg">
-            This graphic t-shirt which is perfect for any occasion. Crafted from a soft and breathable fabric, it offers superior comfort and style.
-          </p>
-
-          {/* Select Colors */}
-          <div className="mb-6">
-            <span className="block text-base font-medium text-gray-700 mb-2">Select Colors</span>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => handleColorChange("#6b4f3b")}
-                className={`w-10 h-10 rounded-full border ${
-                  selectedColor === "#6b4f3b" ? "border-black" : "border-gray-300"
-                }`}
-                style={{ backgroundColor: "#6b4f3b" }}
-              ></button>
-              <button
-                onClick={() => handleColorChange("#2c3e50")}
-                className={`w-10 h-10 rounded-full border ${
-                  selectedColor === "#2c3e50" ? "border-black" : "border-gray-300"
-                }`}
-                style={{ backgroundColor: "#2c3e50" }}
-              ></button>
-              <button
-                onClick={() => handleColorChange("#004d40")}
-                className={`w-10 h-10 rounded-full border ${
-                  selectedColor === "#004d40" ? "border-black" : "border-gray-300"
-                }`}
-                style={{ backgroundColor: "#004d40" }}
-              ></button>
-            </div>
-          </div>
-
-          {/* Choose Size */}
-          <div className="mb-6">
-            <span className="block text-base font-medium text-gray-700 mb-2">Choose Size</span>
-            <div className="flex space-x-3">
-              {["Small", "Medium", "Large", "X-Large"].map((size) => (
-                <button
-                  key={size}
-                  onClick={() => handleSizeChange(size)}
-                  className={`px-5 py-3 border rounded-lg text-base font-medium ${
-                    selectedSize === size
-                      ? "bg-black text-white border-black"
-                      : "bg-white text-gray-700 border-gray-300"
-                  }`}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Quantity Selector */}
-          <div className="mb-8 flex items-center space-x-6">
-            <div className="flex items-center border rounded-lg">
-              <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="px-4 py-2 text-gray-600 hover:text-black"
-              >
-                -
-              </button>
-              <span className="px-6 py-2 border-x text-gray-800 text-lg">{quantity}</span>
-              <button
-                onClick={() => setQuantity(quantity + 1)}
-                className="px-4 py-2 text-gray-600 hover:text-black"
-              >
-                +
-              </button>
-            </div>
-            <button className="bg-black text-white px-8 py-3 rounded-lg hover:bg-gray-800">
-              Add to Cart
-            </button>
-          </div>
-        </div>
+    <main className="px-4 sm:px-6 lg:px-8">
+      <div className="flex justify-center items-center mt-10 mb-10">
+        <h1 className="text-gray-800 font-extrabold text-lg sm:text-xl md:text-2xl lg:text-3xl">
+          Products
+        </h1>
       </div>
-    </div>
+
+      <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {products.map((product) => {
+          const imageUrl = product.image?.asset?._ref
+            ? urlFor(product.image).width(300).height(300).url()
+            : "/images/default-product.jpg";
+
+          return (
+            <div key={product._id} className="group shadow-md bg-neutral-100 flex flex-col items-center justify-between sm:w-full md:w-[300px] lg:w-[220px] h-auto p-4 rounded-lg cursor-pointer">
+              {/* Product Image */}
+              <div className="relative w-full flex justify-center">
+                <Image
+                  src={imageUrl}
+                  width={150}
+                  height={150}
+                  alt={product.name}
+                  className="rounded-md"
+                />
+                {/* Add to Cart Button */}
+                <button
+                             className="absolute bottom-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white px-4 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              
+                  onClick={(e) => handleAddToCart(e, product)}
+                >
+                  Add to Cart
+                </button>
+              </div>
+
+              {/* Product Name */}
+              <h1 className="font-bold font-sans pt-2 text-center">{product.name}</h1>
+
+              {/* Price Section */}
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <span className="text-black font-bold">{product.price}</span>
+                {product.discountPercent && (
+                  <span className="bg-pink-500/50 text-red-500 px-2 py-1 rounded-full text-sm">
+                    -{product.discountPercent}%
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </main>
   );
 };
 
-export default TShirtPage;
+export default ProductPage;
