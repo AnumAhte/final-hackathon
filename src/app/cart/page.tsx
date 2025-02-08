@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { getCartItems, removeFromCart, updateCartQuantity } from "@/app/actions/actions";
-import Link from "next/link";
 import { Products } from "@/types/products";
 import { urlFor } from "@/sanity/lib/image";
 import { useRouter } from "next/navigation";

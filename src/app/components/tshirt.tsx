@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { client } from "@/sanity/lib/client"; // Import the Sanity client
-import { one } from "@/sanity/lib/queries"; // Import the query to fetch multiple products
-import { Products } from "@/types/products"; // Import the Products type
-import Image from "next/image"; // Use Next.js Image component
-import { urlFor } from "@/sanity/lib/image"; // Import the URL generator
+import { client } from "@/sanity/lib/client";
+import { one } from "@/sanity/lib/queries";
+import { Products } from "@/types/products";
+import Image from "next/image";
+import { urlFor } from "@/sanity/lib/image";
 import { addToCart } from "../actions/actions";
 import Swal from "sweetalert2";
+import Link from "next/link"; // ✅ Import Next.js Link
 
 const ProductPage = () => {
   const [products, setProducts] = useState<Products[]>([]);
@@ -17,9 +18,9 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await client.fetch(one); // Fetch multiple products using the 'one' query
+        const data = await client.fetch(one);
         if (data && data.length > 0) {
-          setProducts(data); // Set fetched products to state
+          setProducts(data);
         } else {
           setError("No products found");
         }
@@ -70,8 +71,9 @@ const ProductPage = () => {
 
           return (
             <div key={product._id} className="group shadow-md bg-neutral-100 flex flex-col items-center justify-between sm:w-full md:w-[300px] lg:w-[220px] h-auto p-4 rounded-lg cursor-pointer">
-              {/* Product Image */}
-              <div className="relative w-full flex justify-center">
+              
+              {/* ✅ Product Image with Slug Link */}
+              <Link href={`/product/${product.slug?.current}`}>
                 <Image
                   src={imageUrl}
                   width={150}
@@ -79,18 +81,14 @@ const ProductPage = () => {
                   alt={product.name}
                   className="rounded-md"
                 />
-                {/* Add to Cart Button */}
-                <button
-                             className="absolute bottom-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white px-4 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              
-                  onClick={(e) => handleAddToCart(e, product)}
-                >
-                  Add to Cart
-                </button>
-              </div>
+              </Link>
 
-              {/* Product Name */}
-              <h1 className="font-bold font-sans pt-2 text-center">{product.name}</h1>
+              {/* ✅ Product Name with Slug Link */}
+              <Link href={`/product/${product.slug?.current}`}>
+                <h1 className="font-bold font-sans pt-2 text-center hover:text-blue-500 transition">
+                  {product.name}
+                </h1>
+              </Link>
 
               {/* Price Section */}
               <div className="flex items-center justify-center gap-2 mt-2">
@@ -101,6 +99,14 @@ const ProductPage = () => {
                   </span>
                 )}
               </div>
+
+              {/* Add to Cart Button */}
+              <button
+                className="mt-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white px-4 py-2 rounded-full"
+                onClick={(e) => handleAddToCart(e, product)}
+              >
+                Add to Cart
+              </button>
             </div>
           );
         })}

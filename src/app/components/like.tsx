@@ -6,23 +6,30 @@ import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import { four } from "@/sanity/lib/queries";
 import { urlFor } from "@/sanity/lib/image";
+import { Products } from "@/types/products"; // ✅ Import the proper type
 
 const LikeSection = () => {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Products[]>([]); // ✅ Use proper type
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await client.fetch(four);
-        setProducts(data);
+        const data: Products[] = await client.fetch(four); // ✅ Typecast fetched data
+        if (data.length > 0) {
+          setProducts(data);
+        } else {
+          setError("No products found");
+        }
       } catch (err) {
+        console.error("Error fetching products:", err);
         setError("Failed to load products");
       } finally {
         setLoading(false);
       }
     };
+
     fetchProducts();
   }, []);
 
@@ -37,11 +44,10 @@ const LikeSection = () => {
         </h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {products.map((product) => {
-            console.log(`Link: /product/${product.slug.current}`); // Debugging
             return (
               <Link
                 key={product._id}
-                href={`/product/${product.slug.current}`}
+                href={`/product/${product.slug?.current}`} // ✅ Optional chaining to avoid errors
                 passHref
               >
                 <div className="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow relative group cursor-pointer">

@@ -1,10 +1,11 @@
 "use client"; // ✅ This makes it a Client Component
 
 import { addToCart } from "@/app/actions/actions";
+import { Products } from "@/types/products";
 import Swal from "sweetalert2";
 
 interface AddToCartButtonProps {
-  product: any;
+  product: Products;
 }
 
 export default function AddToCartButton({ product }: AddToCartButtonProps) {
